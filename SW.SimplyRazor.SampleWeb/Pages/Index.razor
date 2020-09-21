@@ -2,20 +2,27 @@
 @inject NavigationManager navigationManager
 @inject IJSRuntime JSRuntime
 @inject IServiceProvider serviceProvider
+@inject ScopedState scopedState
 
-@*<AlertHub></AlertHub>*@
+<AlertHub></AlertHub>
 
-<Search PageSize="10" SearchUrl="employee" OnItem="OnItem" TModel="Employee" Height="200px" Width="max-content">
+<Search PageSize="10" 
+        @bind-Value="scopedState[navigationManager.Uri]" 
+        SearchUrl="employees"
+        OnItem="@(i => i.When(TableItemFlag.DoubleClicked, i => navigationManager.NavigateTo($"/form2/{i.Item.Id}")))"
+        TModel="Employee">
     <Commands>
         <button class="btn btn-primary" type="button" @onclick="() => OnExportToExcel(context.SearchyRequest)">Export</button>
         <a href="form2">
             New Employee
         </a>
     </Commands>
-    @*<Filters>
+    <Filters>
         <Field Name="Id" Text="Id" Required="true"></Field>
         <Field Name="EmploymentDate" Required="true"></Field>
-    </Filters>*@
+        <Field Name="Country" Lookup="@Lookup.FromSearchy("countries")" />
+        <Field Name="EmploymentStatus" Lookup="@Lookup.FromSearchy("mockmodels")" />
+    </Filters>
     <Columns>
         <Field Name="Id" Text="Id">
             <ColumnValue>
@@ -36,13 +43,6 @@
 
 @code{
 
-    SimplySearchValue search;
-
-    void OnSearch(SimplySearchValue value)
-    {
-        navigationManager.NavigateTo($"/{value.ToString()}");
-    }
-
     async Task OnExportToExcel(SearchyRequest searchyRequest)
     {
         var apiClient = serviceProvider.GetApiClient();
@@ -56,7 +56,7 @@
 
     void OnItem(TableItem<Employee> tableItem)
     {
-        if (tableItem.Flag == TableItemFlag.Clicked) 
+        if (tableItem.Flag == TableItemFlag.Clicked)
             navigationManager.NavigateTo($"/form2?id={tableItem.Item.Id}");
     }
 }
